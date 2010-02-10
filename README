@@ -1,0 +1,14 @@
+Supported features:
+ - all basic types
+   - optional fields
+      - default value is used when the field does not exist
+   - required fields
+      - never checked that the field exists
+   - repeated fields
+      - packed fields not supported yet
+   - nested messages
+   - enums (treated as integers)
+
+Features that will probably never be supported:
+  - groups
+  - extensions

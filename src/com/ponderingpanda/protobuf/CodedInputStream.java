@@ -17,195 +17,71 @@ public class CodedInputStream {
     private static final int DIRECT_READ_LIMIT = 20*1024;
     private InputStream in;
 
-    private int currentTag = 0;
-
     public CodedInputStream(InputStream in) {
         this.in = in;
-        advanceTag();
-    }
-
-    public long readInt64(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        long value = readInt64();
-        advanceTag();
-        return value;
-    }
-
-    public int readInt32(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        int value = readInt32();
-        advanceTag();
-        return value;
-    }
-
-    public long readUInt64(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        long value = readUInt64();
-        advanceTag();
-        return value;
-    }
-
-    public int readUInt32(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        int value = readUInt32();
-        advanceTag();
-        return value;
-    }
-
-    public long readSInt64(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        long value = readSInt64();
-        advanceTag();
-        return value;
-    }
-
-    public int readSInt32(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_VARINT))
-            return 0;
-        int value = readSInt32();
-        advanceTag();
-        return value;
-    }
-
-    public float readFloat(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_FIXED32))
-            return 0;
-        float value = readFloat();
-        advanceTag();
-        return value;
-    }
-
-    public double readDouble(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_FIXED64))
-            return 0;
-        double value = readDouble();
-        advanceTag();
-        return value;
-    }
-
-    public String readString(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_LENGTH_DELIMITED))
-            return "";
-        String value = readString();
-        advanceTag();
-        return value;
-    }
-
-    public byte[] readBytes(int field) throws IOException {
-        if(!skipTo(field, WireFormat.WIRETYPE_LENGTH_DELIMITED))
-            return null;
-        byte[] value = readBytes();
-        advanceTag();
-        return value;
-    }
-
-    public boolean readMessage(int field, Message message) throws IOException {
-        //TODO: optimize
-        byte[] bytes = readBytes(field);
-        if(bytes == null)
-            return false;
-        ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
-        CodedInputStream stream = new CodedInputStream(bin);
-        message.deserialize(stream);
-        return true;
-    }
-
-    public boolean hasVarInt(int field) throws IOException {
-        return skipTo(field, WireFormat.WIRETYPE_VARINT);
-    }
-
-    public boolean hasFixed32(int field) throws IOException {
-        return skipTo(field, WireFormat.WIRETYPE_FIXED32);
-    }
-
-    public boolean hasFixed64(int field) throws IOException {
-        return skipTo(field, WireFormat.WIRETYPE_FIXED64);
-    }
-
-    public boolean hasLengthDelimited(int field) throws IOException {
-        return skipTo(field, WireFormat.WIRETYPE_LENGTH_DELIMITED);
-    }
-
-    private boolean skipTo(int field, int wiretype) throws IOException {
-        while(true) {
-            if(currentTag == 0)
-                return false;
-            int cfield = WireFormat.getTagFieldNumber(currentTag);
-            if(cfield > field)
-                return false;
-            if(cfield == field && WireFormat.getTagWireType(currentTag) == wiretype)
-                return true;
-            skipTag(currentTag);
-            advanceTag();
-        }
-    }
-
-    private void advanceTag() {
-        try {
-            currentTag = readTag();
-        } catch(IOException e) {
-            currentTag = 0;
-        }
     }
 
 	// -----------------------------------------------------------------
 
 	/** Read a {@code double} field value from the stream. */
-	private double readDouble() throws IOException {
+	public double readDouble() throws IOException {
 		return Double.longBitsToDouble(readRawLittleEndian64());
 	}
 
 	/** Read a {@code float} field value from the stream. */
-	private float readFloat() throws IOException {
+	public float readFloat() throws IOException {
 		return Float.intBitsToFloat(readRawLittleEndian32());
 	}
 
 	/** Read an {@code int64} field value from the stream. */
-	private long readInt64() throws IOException {
+	public long readInt64() throws IOException {
 		return readRawVarint64();
 	}
 
-    private long readUInt64() throws IOException {
+    public long readUInt64() throws IOException {
 		return readRawVarint64();
 	}
 
 	/** Read an {@code int32} field value from the stream. */
-	private int readInt32() throws IOException {
+	public int readInt32() throws IOException {
 		return readRawVarint32();
 	}
 
     /** Read an {@code uint32} field value from the stream. */
-	private int readUInt32() throws IOException {
+	public int readUInt32() throws IOException {
 		return readRawVarint32();
 	}
 
-    private long readSInt64() throws IOException {
+    public long readSInt64() throws IOException {
         throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	/** Read an {@code int32} field value from the stream. */
-	private int readSInt32() throws IOException {
+	public int readSInt32() throws IOException {
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	/** Read a {@code bool} field value from the stream. */
-	private boolean readBool() throws IOException {
+	public boolean readBool() throws IOException {
 		return readRawVarint32() != 0;
 	}
 
 	/** Read a {@code string} field value from the stream. */
-	private String readString() throws IOException {
+	public String readString() throws IOException {
 		byte[] bytes = readBytes();
         return new String(bytes, "UTF-8");
 	}
 
+    public void readMessage(Message message) throws IOException {
+        //TODO: optimize
+        byte[] bytes = readBytes();
+        ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+        CodedInputStream stream = new CodedInputStream(bin);
+        message.deserialize(stream);
+    }
+
 	/** Read a {@code bytes} field value from the stream. */
-	private byte[] readBytes() throws IOException {
+	public byte[] readBytes() throws IOException {
 		int size = readRawVarint32();
         int off = 0;
         if(size < DIRECT_READ_LIMIT) {
@@ -235,14 +111,15 @@ public class CodedInputStream {
         }
 	}
 
-    private int readTag() throws IOException {
-        int tag = readRawVarint32();
-        if(tag == 0)
-            throw new IOException("Invalid tag");
-        return tag;
+    public int readTag() {
+        try {
+            return readRawVarint32();
+        } catch(IOException e) {
+            return 0;
+        }
     }
 
-    private void skipTag(int tag) throws IOException {
+    public void skipTag(int tag) throws IOException {
         if(tag == 0)
             return;
         final int dataType = WireFormat.getTagWireType(tag);

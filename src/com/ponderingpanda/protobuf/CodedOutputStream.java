@@ -18,7 +18,7 @@ public class CodedOutputStream {
     private ByteArrayOutputStream nestedOut;
     private OutputStream out;
 
-    public CodedOutputStream(OutputStream out) throws IOException {
+    public CodedOutputStream(OutputStream out) {
         this.out = out;
     }
     
@@ -73,6 +73,8 @@ public class CodedOutputStream {
     }
 
     public void writeString(int field, String value) throws IOException {
+        if(value == null)
+            return;
         writeTag(field, WireFormat.WIRETYPE_LENGTH_DELIMITED);
 		// Unfortunately there does not appear to be any way to tell Java to
 		// encode
@@ -85,6 +87,8 @@ public class CodedOutputStream {
 	}
 
     public void writeBytes(int field, byte[] value) throws IOException {
+        if(value == null)
+            return;
         writeTag(field, WireFormat.WIRETYPE_LENGTH_DELIMITED);
 		writeRawVarint32(value.length);
         out.write(value);
@@ -103,9 +107,11 @@ public class CodedOutputStream {
     }
 
     public void writeMessage(int field, Message message) throws IOException {
+        if(message == null)
+            return;
         if(nestedStream == null) {
             nestedOut = new ByteArrayOutputStream();
-            nestedStream = new CodedOutputStream(out);
+            nestedStream = new CodedOutputStream(nestedOut);
         }
         message.serialize(nestedStream);
         writeBytes(field, nestedOut.toByteArray());
