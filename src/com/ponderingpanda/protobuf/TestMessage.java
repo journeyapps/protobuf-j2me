@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package com.ponderingpanda.protobuf;
 
@@ -10,7 +6,7 @@ import java.util.Vector;
 
 /**
  *
- * @author ralf
+ * @author Ralf Kistner
  */
 public class TestMessage implements Message {
     public Vector f = new Vector();

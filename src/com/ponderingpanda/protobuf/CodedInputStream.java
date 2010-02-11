@@ -1,6 +1,11 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright Copyright (c) 2010, Pondering Panda
+ * All rights reserved.
+ * 
+ * See COPYING.txt for the complete copyright notice.
+ *
+ * This code is adapted from the CodedInputStream class from the official
+ * Java implementation of Protocol Buffers.
  */
 package com.ponderingpanda.protobuf;
 
@@ -11,7 +16,7 @@ import java.io.InputStream;
 
 /**
  *
- * @author ralf
+ * @author Ralf Kistner
  */
 public class CodedInputStream {
     private static final int DIRECT_READ_LIMIT = 20*1024;

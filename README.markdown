@@ -5,11 +5,13 @@ This is an alternative Java implementation of [Google Protocol Buffers](http://c
 Although it can be used in any Java project, it is aimed specifically at J2ME projects. This means the following:
 
   - No Java enums.
-  - No generics, Vectors are used for repeated fields.
+  - No generics; Vectors are used for repeated fields.
   - No reflection.
   - As little as possible code, both for the library and the generated code.
 
 The generated code is simple enough that most of it can be modified or optimized manually, although the changes will be overwritten when the code is generated again.
+
+The code is licenced under the [New BSD License](http://www.opensource.org/licenses/bsd-license.php). See COPYING.txt for details.
 
 # Installation on Ubuntu
 

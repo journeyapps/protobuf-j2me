@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package com.ponderingpanda.protobuf;
 
 import java.io.ByteArrayInputStream;
@@ -11,7 +6,7 @@ import java.io.IOException;
 
 /**
  *
- * @author ralf
+ * @author Ralf Kistner
  */
 public class TestApp {
     public static void main(String[] args) throws IOException {

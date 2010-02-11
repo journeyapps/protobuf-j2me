@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright Copyright (c) 2010, Pondering Panda
+# All rights reserved.
+# See COPYING.txt
+
 import sys
 from plugin_pb2 import *
 from google.protobuf.descriptor_pb2 import *
