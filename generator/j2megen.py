@@ -11,10 +11,19 @@ request.ParseFromString(sys.stdin.read())
 response = CodeGeneratorResponse()
 
 file_template = """
+%(package)s
+
 import java.util.Vector;
+import java.io.IOException;
 
 import com.ponderingpanda.protobuf.*;
 
+public class %(name)s implements Message {
+%(contents)s
+}
+"""
+
+enum_file_template = """
 %(package)s
 
 public class %(name)s {
@@ -23,6 +32,12 @@ public class %(name)s {
 """
 
 nested_template = """
+public static class %(name)s implements Message {
+%(contents)s
+}
+"""
+
+enum_nested_template = """
 public static class %(name)s {
 %(contents)s
 }
@@ -34,11 +49,11 @@ class_template = """
 %(fields)s
 %(accessors)s
 
-public final void serialize(CodedOutputStream out) {
+public final void serialize(CodedOutputStream out) throws IOException {
 %(serializer)s
 }
 
-public final void deserialize(CodedInputStream in) {
+public final void deserialize(CodedInputStream in) throws IOException {
     while(true) {
         int tag = in.readTag();
         switch(tag) {
@@ -80,9 +95,14 @@ public Vector get%(Name)sVector() {
 }
 """
 
-repeated_parser_template = \
-"""case %(tag)d:
+repeated_parser_template = """case %(tag)d:
     this.add%(Name)s(in.read%(method)s());
+    break;"""
+
+repeated_message_parser_template = """case %(tag)d:
+    %(type)s message = new %(type)s();
+    in.readMessage(message);
+    this.add%(Name)s(message);
     break;"""
     
 repeated_serializer_template = """
@@ -90,9 +110,13 @@ for(int i = 0; i < get%(Name)sCount(); i++) {
     out.write%(method)s(%(number)d, get%(Name)s(i));
 }"""
 
-single_parser_template = \
-"""case %(tag)d:
+single_parser_template = """case %(tag)d:
     this.%(name)s = in.read%(method)s();
+    break;"""
+    
+single_message_parser_template = """case %(tag)d:
+    this.%(name)s = new %(type)s();
+    in.readMessage(this.%(name)s);
     break;"""
     
 single_serializer_template = "out.write%(method)s(%(number)d, %(name)s);"
@@ -152,7 +176,7 @@ def generate_class(t):
   nested_enums = []
   nested_types = []
   for enum in t.enum_type:
-    nested_enums.append(nested_template % dict(name=enum.name, contents=indent(generate_enum(enum))))
+    nested_enums.append(enum_nested_template % dict(name=enum.name, contents=indent(generate_enum(enum))))
       
   for nested in t.nested_type:
     nested_types.append(nested_template % dict(name=nested.name, contents=indent(generate_class(nested))))
@@ -177,7 +201,7 @@ def generate_class(t):
     
     
     if field.label == FieldDescriptorProto.LABEL_REPEATED:
-      fields.append("private Vector %(name)s; // %(number)s" % dict(type=type, name=name, number=number))
+      fields.append("private Vector %(name)s; // %(number)s, %(type)s" % dict(type=type, name=name, number=number))
       box_e, box_s, unbox_e, unbox_s = [""]*4
       if type in WRAPPERS:
         box_s = "new %s(" % WRAPPERS[type]
@@ -190,14 +214,20 @@ def generate_class(t):
       accessors.append(repeated_accessor_template % dict(name=name, Name=Name, type=type, box_s=box_s, box_e=box_e, unbox_s=unbox_s, unbox_e=unbox_e))
       serializer.append((number, repeated_serializer_template % dict(method=method, Name=Name, number=number)))
       
-      parser.append((number, repeated_parser_template % dict(tag=tag, Name=Name, method=method)))
+      if field.type == FieldDescriptorProto.TYPE_MESSAGE:
+        parser.append((number, repeated_message_parser_template % dict(tag=tag, Name=Name, type=type)))
+      else:
+        parser.append((number, repeated_parser_template % dict(tag=tag, Name=Name, method=method)))
     
     else:
       fields.append("private %(type)s %(name)s; // %(number)s" % dict(type=type, name=name, number=number))
       accessors.append(accessor_template % dict(name=name, Name=Name, type=type))
       serializer.append((number, single_serializer_template % dict(method=method, name=name, number=number)))
       
-      parser.append((number, single_parser_template % dict(tag=tag, name=name, method=method)))
+      if field.type == FieldDescriptorProto.TYPE_MESSAGE:
+        parser.append((number, single_message_parser_template % dict(tag=tag, name=name, type=type)))
+      else:
+        parser.append((number, single_parser_template % dict(tag=tag, name=name, method=method)))
     
     
   parser.sort()
@@ -234,7 +264,7 @@ for f in request.proto_file:
     file.name = folder + t.name + ".java"
     
     c = generate_enum(t)
-    file.content = file_template % {'name': t.name, 'contents': indent(c), 'package': pline}
+    file.content = enum_file_template % {'name': t.name, 'contents': indent(c), 'package': pline}
     
     
 sys.stdout.write(response.SerializeToString())

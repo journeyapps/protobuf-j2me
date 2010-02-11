@@ -16,7 +16,8 @@ import java.io.InputStream;
 public class CodedInputStream {
     private static final int DIRECT_READ_LIMIT = 20*1024;
     private InputStream in;
-
+    private boolean endOfStream = false;
+    
     public CodedInputStream(InputStream in) {
         this.in = in;
     }
@@ -32,6 +33,14 @@ public class CodedInputStream {
 	public float readFloat() throws IOException {
 		return Float.intBitsToFloat(readRawLittleEndian32());
 	}
+
+    public int readFixed32() throws IOException {
+        return readRawLittleEndian32();
+    }
+
+    public long readFixed64() throws IOException {
+        return readRawLittleEndian64();
+    }
 
 	/** Read an {@code int64} field value from the stream. */
 	public long readInt64() throws IOException {
@@ -115,6 +124,7 @@ public class CodedInputStream {
         try {
             return readRawVarint32();
         } catch(IOException e) {
+            endOfStream = true;
             return 0;
         }
     }
@@ -140,6 +150,10 @@ public class CodedInputStream {
 		default:
 			break;
 		}
+    }
+
+    public boolean isEndOfStream() {
+        return endOfStream;
     }
 
     /**
@@ -189,7 +203,7 @@ public class CodedInputStream {
 	 * Read a raw Varint from the stream. If larger than 32 bits, discard the
 	 * upper bits.
 	 */
-	private int readRawVarint32() throws IOException {
+	protected int readRawVarint32() throws IOException {
 		byte tmp = readRawByte();
 		if (tmp >= 0) {
 			return tmp;
@@ -223,7 +237,7 @@ public class CodedInputStream {
 	}
 
 	/** Read a raw Varint from the stream. */
-	long readRawVarint64() throws IOException {
+	protected long readRawVarint64() throws IOException {
 		int shift = 0;
 		long result = 0;
 		while (shift < 64) {
@@ -237,7 +251,7 @@ public class CodedInputStream {
 	}
 
 	/** Read a 32-bit little-endian integer from the stream. */
-	int readRawLittleEndian32() throws IOException {
+	protected int readRawLittleEndian32() throws IOException {
 		byte b1 = readRawByte();
 		byte b2 = readRawByte();
 		byte b3 = readRawByte();
@@ -246,7 +260,7 @@ public class CodedInputStream {
 	}
 
 	/** Read a 64-bit little-endian integer from the stream. */
-	long readRawLittleEndian64() throws IOException {
+	protected long readRawLittleEndian64() throws IOException {
 		byte b1 = readRawByte();
 		byte b2 = readRawByte();
 		byte b3 = readRawByte();

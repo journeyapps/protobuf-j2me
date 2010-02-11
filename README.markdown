@@ -3,6 +3,7 @@
 This is an alternative Java implementation of [Google Protocol Buffers](http://code.google.com/p/protobuf).
 
 Although it can be used in any Java project, it is aimed specifically at J2ME projects. This means the following:
+
   - No Java enums.
   - No generics, Vectors are used for repeated fields.
   - No reflection.
@@ -23,7 +24,7 @@ The generated code is simple enough that most of it can be modified or optimized
 
 # Usage
 
-Run `protoc` as usual, but use the option `--j2me_out` instead of `--java_out`.
+Run `protoc` as usual, using the option `--j2me_out` instead of `--java_out`.
 
 Include the Java source code and the generated code in your application.
 

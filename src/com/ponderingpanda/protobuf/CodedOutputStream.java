@@ -67,6 +67,16 @@ public class CodedOutputStream {
 		writeRawLittleEndian64(Double.doubleToLongBits(value));
     }
 
+    public void writeFixed32(int field, int value) throws IOException {
+        writeTag(field, WireFormat.WIRETYPE_FIXED32);
+        writeRawLittleEndian32(value);
+    }
+
+    public void writeFixed64(int field, long value) throws IOException {
+        writeTag(field, WireFormat.WIRETYPE_FIXED64);
+        writeRawLittleEndian64(value);
+    }
+
     public void writeBool(int field, boolean value) throws IOException {
         writeTag(field, WireFormat.WIRETYPE_VARINT);
 		out.write(value ? 1 : 0);
@@ -119,7 +129,7 @@ public class CodedOutputStream {
     }
 
 	/** Encode and write a tag. */
-	private void writeTag(int fieldNumber, int wireType) throws IOException {
+	protected void writeTag(int fieldNumber, int wireType) throws IOException {
 		writeRawVarint32(WireFormat.makeTag(fieldNumber, wireType));
 	}
 
@@ -127,7 +137,7 @@ public class CodedOutputStream {
 	 * Encode and write a varint. {@code value} is treated as unsigned, so it
 	 * won't be sign-extended if negative.
 	 */
-	private void writeRawVarint32(int value) throws IOException {
+	protected void writeRawVarint32(int value) throws IOException {
 		while (true) {
 			if ((value & ~0x7F) == 0) {
 				out.write(value);
@@ -140,7 +150,7 @@ public class CodedOutputStream {
 	}
 
     /** Encode and write a varint. */
-	private void writeRawVarint64(long value) throws IOException {
+	protected void writeRawVarint64(long value) throws IOException {
 		while (true) {
 			if ((value & ~0x7FL) == 0) {
 				out.write((int) value);
@@ -153,7 +163,7 @@ public class CodedOutputStream {
 	}
 
     /** Write a little-endian 32-bit integer. */
-	private void writeRawLittleEndian32(int value) throws IOException {
+	protected void writeRawLittleEndian32(int value) throws IOException {
 		out.write((value) & 0xFF);
 		out.write((value >> 8) & 0xFF);
 		out.write((value >> 16) & 0xFF);
@@ -161,7 +171,7 @@ public class CodedOutputStream {
 	}
 
     /** Write a little-endian 64-bit integer. */
-	private void writeRawLittleEndian64(long value) throws IOException {
+	protected void writeRawLittleEndian64(long value) throws IOException {
 		out.write((int) (value) & 0xFF);
 		out.write((int) (value >> 8) & 0xFF);
 		out.write((int) (value >> 16) & 0xFF);
