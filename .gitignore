@@ -1,1 +1,5 @@
 nbproject
+*~
+*.pyc
+build
+dist

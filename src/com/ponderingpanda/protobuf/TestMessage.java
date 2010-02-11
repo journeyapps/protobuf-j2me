@@ -17,6 +17,8 @@ public class TestMessage implements Message {
     public int i = 0;
     public TestMessage nestedMessage;
     public String message = "hallo";
+    public boolean b = false;
+    
 
     public String toString() {
         return message + "," + f + "," + i + ",{" + nestedMessage + "}";
