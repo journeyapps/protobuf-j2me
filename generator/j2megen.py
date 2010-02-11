@@ -99,29 +99,29 @@ public Vector get%(Name)sVector() {
 }
 """
 
-repeated_parser_template = """case %(tag)d:
+repeated_parser_template = """case %(tag)d: {
     this.add%(Name)s(in.read%(method)s());
-    break;"""
+    break; }"""
 
-repeated_message_parser_template = """case %(tag)d:
+repeated_message_parser_template = """case %(tag)d: {
     %(type)s message = new %(type)s();
     in.readMessage(message);
     this.add%(Name)s(message);
-    break;"""
+    break; }"""
     
 repeated_serializer_template = """
 for(int i = 0; i < get%(Name)sCount(); i++) {
     out.write%(method)s(%(number)d, get%(Name)s(i));
 }"""
 
-single_parser_template = """case %(tag)d:
+single_parser_template = """case %(tag)d: {
     this.%(name)s = in.read%(method)s();
-    break;"""
+    break; }"""
     
-single_message_parser_template = """case %(tag)d:
+single_message_parser_template = """case %(tag)d: {
     this.%(name)s = new %(type)s();
     in.readMessage(this.%(name)s);
-    break;"""
+    break; }"""
     
 single_serializer_template = "out.write%(method)s(%(number)d, %(name)s);"
 

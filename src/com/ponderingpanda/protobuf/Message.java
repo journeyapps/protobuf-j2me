@@ -15,6 +15,6 @@ import java.io.IOException;
  * @author ralf
  */
 public interface Message {
-    public void serialize(CodedOutputStream out)throws IOException;
+    public void serialize(CodedOutputStream out) throws IOException;
     public void deserialize(CodedInputStream in) throws IOException;
 }

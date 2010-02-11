@@ -15,7 +15,7 @@ The code is licenced under the [New BSD License](http://www.opensource.org/licen
 
 # Installation on Ubuntu
 
-  - Download protobuf, and install both the C++ and Python versions.
+  - Download protobuf 2.3.0, and install both the C++ and Python versions.
   - Install Git
   - `git clone git://github.com/ponderingpanda/protobuf-j2me.git`
   - Create an executable file `/usr/local/bin/protoc-gen-j2me`, containing:
