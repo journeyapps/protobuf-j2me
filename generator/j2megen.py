@@ -142,6 +142,8 @@ TYPE_MAP = {
   FieldDescriptorProto.TYPE_UINT32: ["int", "UInt32", WIRETYPE_VARINT],
   FieldDescriptorProto.TYPE_FIXED32: ["int", "Fixed32", WIRETYPE_FIXED32],
   FieldDescriptorProto.TYPE_FIXED64: ["long", "Fixed64", WIRETYPE_FIXED64],
+  FieldDescriptorProto.TYPE_SFIXED32: ["int", "Fixed32", WIRETYPE_FIXED32],
+  FieldDescriptorProto.TYPE_SFIXED64: ["long", "Fixed64", WIRETYPE_FIXED64],
   FieldDescriptorProto.TYPE_BOOL: ["boolean", "Bool", WIRETYPE_VARINT],
   FieldDescriptorProto.TYPE_STRING: ["String", "String", WIRETYPE_LENGTH_DELIMITED],
   FieldDescriptorProto.TYPE_BYTES: ["byte[]", "Bytes", WIRETYPE_LENGTH_DELIMITED],
@@ -205,7 +207,7 @@ def generate_class(t):
     
     
     if field.label == FieldDescriptorProto.LABEL_REPEATED:
-      fields.append("private Vector %(name)s; // %(number)s, %(type)s" % dict(type=type, name=name, number=number))
+      fields.append("private Vector %(name)s = new Vector(); // %(number)s, %(type)s" % dict(type=type, name=name, number=number))
       box_e, box_s, unbox_e, unbox_s = [""]*4
       if type in WRAPPERS:
         box_s = "new %s(" % WRAPPERS[type]

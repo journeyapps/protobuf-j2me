@@ -67,12 +67,14 @@ public class CodedInputStream {
 	}
 
     public long readSInt64() throws IOException {
-        throw new UnsupportedOperationException("Not implemented yet");
+		long n = readRawVarint64();
+        return (n >>> 1) ^ -(n & 1);
 	}
 
 	/** Read an {@code int32} field value from the stream. */
 	public int readSInt32() throws IOException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		int n = readRawVarint32();
+        return (n >>> 1) ^ -(n & 1);
 	}
 
 	/** Read a {@code bool} field value from the stream. */
