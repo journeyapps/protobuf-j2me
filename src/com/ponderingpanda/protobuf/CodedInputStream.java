@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -85,7 +86,12 @@ public class CodedInputStream {
 	/** Read a {@code string} field value from the stream. */
 	public String readString() throws IOException {
 		byte[] bytes = readBytes();
-        return new String(bytes, "UTF-8");
+        try {
+            return new String(bytes, "UTF-8");
+        } catch(Exception e) {
+            // Typically a String decoding exception
+            throw new EncodingException(e.getMessage());
+        }
 	}
 
     public void readMessage(Message message) throws IOException {
@@ -107,7 +113,7 @@ public class CodedInputStream {
             while(off < size) {
                 int read = in.read(bytes, off, size - off);
                 if(read < 0)
-                    throw new IOException("Unexpected end of stream");
+                    throw new EncodingException("Unexpected end of stream");
                 off += read;
             }
             return bytes;
@@ -177,7 +183,7 @@ public class CodedInputStream {
 		for (; offset < 32; offset += 7) {
 			int b = input.read();
 			if (b == -1) {
-				throw new IOException("Malformed varint");
+				throw new EncodingException("Malformed varint");
 			}
 			result |= (b & 0x7f) << offset;
 			if ((b & 0x80) == 0) {
@@ -188,13 +194,13 @@ public class CodedInputStream {
 		for (; offset < 64; offset += 7) {
 			int b = input.read();
 			if (b == -1) {
-				throw new IOException("Truncated message");
+				throw new EncodingException("Truncated message");
 			}
 			if ((b & 0x80) == 0) {
 				return result;
 			}
 		}
-		throw new IOException("Malformed varint");
+		throw new EncodingException("Malformed varint");
 	}
 
 	// =================================================================
@@ -235,7 +241,7 @@ public class CodedInputStream {
 							if (readRawByte() >= 0)
 								return result;
 						}
-						throw new IOException("Malformed varint");
+						throw new EncodingException("Malformed varint");
 					}
 				}
 			}
@@ -254,7 +260,7 @@ public class CodedInputStream {
 				return result;
 			shift += 7;
 		}
-		throw new IOException("Malformed varint");
+		throw new EncodingException("Malformed varint");
 	}
 
 	/** Read a 32-bit little-endian integer from the stream. */

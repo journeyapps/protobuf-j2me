@@ -17,7 +17,7 @@ import java.io.OutputStream;
  *
  * @author Ralf Kistner
  */
-public class Util {
+public class ProtoUtil {
     /** Only use this when this will be the only message written to the stream. */
     public static void writeMessage(OutputStream out, Message message) throws IOException {
         CodedOutputStream coded = new CodedOutputStream(out);
@@ -43,16 +43,26 @@ public class Util {
         coded.writeRawVarint32(0);
     }
 
-    public static byte[] messageToBytes(Message message) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        CodedOutputStream coded = new CodedOutputStream(out);
-        message.serialize(coded);
-        return out.toByteArray();
+    public static byte[] messageToBytes(Message message) throws EncodingException {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            CodedOutputStream coded = new CodedOutputStream(out);
+            message.serialize(coded);
+            return out.toByteArray();
+        } catch(IOException e) {
+            // We are using a ByteArrayOutputStream, this should not happen
+            throw new EncodingException("IOException: " + e.getMessage());
+        }
     }
 
-    public static void messageFromBytes(byte[] in, Message message) throws IOException {
+    public static void messageFromBytes(byte[] in, Message message) throws EncodingException {
         CodedInputStream coded = new CodedInputStream(new ByteArrayInputStream(in));
-        message.deserialize(coded);
+        try {
+            message.deserialize(coded);
+        } catch(IOException e) {
+            // We are using a ByteArrayInputStream, this should not happen
+            throw new EncodingException("IOException: " + e.getMessage());
+        }
     }
 
     public static void readMessageWithSize(InputStream in, Message message) throws IOException {

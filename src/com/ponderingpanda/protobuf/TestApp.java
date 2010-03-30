@@ -22,11 +22,11 @@ public class TestApp {
         System.out.println(m);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Util.writeDelimitedMessage(out, m);
+        ProtoUtil.writeDelimitedMessage(out, m);
         m.message = "Outer2";
-        Util.writeDelimitedMessage(out, m);
+        ProtoUtil.writeDelimitedMessage(out, m);
         m.message = "Outer3";
-        Util.writeDelimitedMessage(out, m);
+        ProtoUtil.writeDelimitedMessage(out, m);
         
         System.out.println(new String(out.toByteArray()));
 
@@ -35,19 +35,19 @@ public class TestApp {
         TestMessage min;
 
         min = new TestMessage();
-        Util.readDelimitedMessage(in, min);
+        ProtoUtil.readDelimitedMessage(in, min);
         System.out.println(min);
 
         min = new TestMessage();
-        Util.readDelimitedMessage(in, min);
+        ProtoUtil.readDelimitedMessage(in, min);
         System.out.println(min);
 
         min = new TestMessage();
-        Util.readDelimitedMessage(in, min);
+        ProtoUtil.readDelimitedMessage(in, min);
         System.out.println(min);
 
         min = new TestMessage();
-        Util.readDelimitedMessage(in, min);
+        ProtoUtil.readDelimitedMessage(in, min);
         System.out.println(min);
     }
 }

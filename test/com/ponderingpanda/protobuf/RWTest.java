@@ -40,9 +40,6 @@ public class RWTest {
     public void tearDown() {
     }
 
-    // TODO add test methods here.
-    // The methods must be annotated with annotation @Test. For example:
-    //
     @Test
     public void writeReadWrite() throws IOException {
         TestAllTypes o = new TestAllTypes();
@@ -66,10 +63,10 @@ public class RWTest {
         o.setOptionalUint32(123456789);
         o.setOptionalUint64(12345678912345678l);
 
-        byte[] bytes = Util.messageToBytes(o);
+        byte[] bytes = ProtoUtil.messageToBytes(o);
 
         TestAllTypes i = new TestAllTypes();
-        Util.messageFromBytes(bytes, i);
+        ProtoUtil.messageFromBytes(bytes, i);
 
         assertEquals(o.getOptionalBool(), i.getOptionalBool());
         assertArrayEquals(o.getOptionalBytes(), i.getOptionalBytes());
@@ -91,7 +88,7 @@ public class RWTest {
         assertEquals(o.getOptionalUint32(), i.getOptionalUint32());
         assertEquals(o.getOptionalUint64(), i.getOptionalUint64());
 
-        byte[] bytes2 = Util.messageToBytes(i);
+        byte[] bytes2 = ProtoUtil.messageToBytes(i);
         assertArrayEquals(bytes, bytes2);
     }
 
