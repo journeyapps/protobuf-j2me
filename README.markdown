@@ -14,8 +14,16 @@ The generated code is simple enough that most of it can be modified or optimized
 The code is licenced under the [New BSD License](http://www.opensource.org/licenses/bsd-license.php). See COPYING.txt for details.
 
 # Installation on Ubuntu
-
-  - Download protobuf 2.3.0, and install both the C++ and Python versions.
+  - If it is installed, uninstall the protobuf-compiler shipped with Ubuntu. An old version (2.0.3) is shipped with Ubuntu 9.10, but 2.3.0 is required.
+  - Download protobuf 2.3.0, and install both the C++ and Python versions:
+  
+        ./configure
+        make
+        sudo make install
+        cd python
+        ./setup.py build
+        sudo ./setup.py install
+  
   - Install Git
   - `git clone git://github.com/ponderingpanda/protobuf-j2me.git`
   - Create an executable file `/usr/local/bin/protoc-gen-j2me`, containing:
@@ -24,9 +32,16 @@ The code is licenced under the [New BSD License](http://www.opensource.org/licen
         cd /path/to/protobuf-j2me/generator
         python j2megen.py
 
+
+# Installation on Windows
+
+If anyone gets the generator to work on Windows, please let me know. It should be possible using something like py2exe.
+
 # Usage
 
 Run `protoc` as usual, using the option `--j2me_out` instead of `--java_out`.
+
+Make sure that you are using protoc version 2.3.0. This can be confirmed with `protoc --version`. The code generator does not work with any earlier versions, and might not work with future versions.
 
 Include the Java source code and the generated code in your application.
 
@@ -43,9 +58,8 @@ Include the Java source code and the generated code in your application.
       - packed fields not supported yet
   - global and nested message declarations
   - global and nested enums
-    - treated integer constants
+    - treated as integer constants
     - not checked to be a valid value
-    - constants are generated in a separate class for each enum (might change in the future)
 
 # Planned:
   - lots of unit tests
