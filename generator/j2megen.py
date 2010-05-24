@@ -144,6 +144,10 @@ public %(type)s get%(Name)s(int index) {
 public Vector get%(Name)sVector() {
     return this.%(name)s;
 }
+
+public void set%(Name)sVector(Vector value) {
+    this.%(name)s = value;
+}
 """
 
 repeated_parser_template = """case %(tag)d: {
