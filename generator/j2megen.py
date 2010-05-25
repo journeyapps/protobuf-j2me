@@ -24,6 +24,8 @@ import java.io.IOException;
 
 import com.ponderingpanda.protobuf.*;
 
+%(imports)s
+
 public class %(name)s implements Message {
 %(contents)s
 }
@@ -44,6 +46,8 @@ import java.util.Vector;
 import java.io.IOException;
 
 import com.ponderingpanda.protobuf.*;
+
+%(imports)s
 
 public class %(name)s {
 %(contents)s
@@ -340,8 +344,31 @@ def find_all_classes(messages, parents=[]):
   for message in messages:
     all_classes.add('.'.join(parents + [message.name]))
     find_all_classes(message.nested_type, parents + [message.name])
-  
+
+files_to_generate = set(request.file_to_generate)
+in_imported_file = True
+imported_packages = {}
+
 for f in request.proto_file:
+  # Do not generate anything for imported files
+  if not f.HasField("name"):
+    # Continue previous file
+    if in_imported_file:
+      continue
+  else:
+    if f.name in files_to_generate:
+      in_imported_file = False
+    else:
+      in_imported_file = True
+      if f.options.HasField("java_package"):
+        imported_packages[f.name] = f.options.java_package
+      continue
+    
+  imports = ""
+  for d in f.dependency:
+    imports += "import %s.*;\n" % (imported_packages[d])
+  
+  
   if f.options.HasField("java_package"):
     package = f.options.java_package
   elif f.HasField("package"):
@@ -367,19 +394,19 @@ for f in request.proto_file:
     
     c, nested_encoder_implementations = generate_class(t, [])
     encoders += nested_encoder_implementations
-    file.content = file_template % {'name': t.name, 'contents': indent(c), 'package': pline}
+    file.content = file_template % {'name': t.name, 'contents': indent(c), 'package': pline, 'imports': imports}
     
   for t in f.enum_type:
     file = response.file.add()
     file.name = folder + t.name + ".java"
     
     c = generate_enum(t)
-    file.content = enum_file_template % {'name': t.name, 'contents': indent(c), 'package': pline}
+    file.content = enum_file_template % {'name': t.name, 'contents': indent(c), 'package': pline, 'imports': imports}
     
   if seperate_encoders:
     file = response.file.add()
     file.name = folder + "ProtobufEncoders.java"
-    file.content = encoders_file_template % dict(name="ProtobufEncoders", contents=jindent(encoders), package=pline)
+    file.content = encoders_file_template % dict(name="ProtobufEncoders", contents=jindent(encoders), package=pline, imports=imports)
     
 sys.stdout.write(response.SerializeToString())
 sys.stdout.flush()
