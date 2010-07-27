@@ -51,29 +51,32 @@ Include the Java source code and the generated code in your application.
     - unsigned are treated as signed integers
   - labels
     - optional fields
-      - default value is used when the field does not exist
+      - support is currently experimental
+      - primitive fields have hasXXX and clearXXX methods
+      - nested messages may be set to null
     - required fields
-      - treated the same as optional fields (never checked that the field exists)
+      - no validation is done
+      - an arbitrary default value is used if the field is not set
     - repeated fields
       - packed fields not supported yet
   - global and nested message declarations
   - global and nested enums
     - treated as integer constants
-    - not checked to be a valid value
+    - not validated
+  - imports
+    - experimental support, might not work in all cases
 
 # Planned:
   - lots of unit tests
   - optimization of the library
-  - correct handling of variables clashing with reserved keywords
-  - includes
-  - correct scope handling
+  - better handling of variables clashing with reserved keywords
+  - better scope handling
   - default values
   - option to nest everything inside a single class (like the official Java implementation)
 
 # Possibilities (might be added):
   - hasXXX methods
-    - if a way is found to do this without adding too much overhead and generated code
-    - perhaps an option could be added for this?
+    - add an option to disable this feature, as an optimization
   - an option to use public fields instead of getters & setters
 
 # Features that probably won't be added:

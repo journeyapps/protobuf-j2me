@@ -132,6 +132,25 @@ public void set%(Name)s(%(type)s %(name)s) {
 }
 """
 
+optional_accessor_template = """
+public boolean has%(Name)s() {
+    return _has%(Name)s;
+}
+
+public %(type)s get%(Name)s() {
+    return %(name)s;
+}
+
+public void set%(Name)s(%(type)s %(name)s) {
+    this.%(name)s = %(name)s;
+    _has%(Name)s = true;
+}
+
+public void clear%(Name)s() {
+    _has%(Name)s = false;
+}
+"""
+
 repeated_accessor_template = """
 public void add%(Name)s(%(type)s value) {
     this.%(name)s.addElement(%(box_s)svalue%(box_e)s);
@@ -172,7 +191,13 @@ for(int i = 0; i < %(message)s.get%(Name)sCount(); i++) {
 single_parser_template = """case %(tag)d: {
     %(message)s.%(name)s = in.read%(method)s();
     break; }"""
-    
+
+optional_parser_template = """case %(tag)d: {
+    %(message)s.%(name)s = in.read%(method)s();
+    %(message)s._has%(Name)s = true;
+    break; }"""
+
+
 single_message_parser_template = """case %(tag)d: {
     %(message)s.%(name)s = new %(type)s();
     in.readMessage(%(message)s.%(name)s);
@@ -180,6 +205,8 @@ single_message_parser_template = """case %(tag)d: {
     
 single_serializer_template = "out.write%(method)s(%(number)d, %(message)s.%(name)s);"
 
+optional_serializer_template = """if(%(message)s._has%(Name)s)
+    out.write%(method)s(%(number)d, %(message)s.%(name)s);"""
 
 WIRETYPE_VARINT           = 0;
 WIRETYPE_FIXED64          = 1;
@@ -280,10 +307,12 @@ def generate_class(t, parents):
         
       method = "Message"
       tag = (field.number << 3) + WIRETYPE_LENGTH_DELIMITED
+      is_message = True
     elif field.type in TYPE_MAP:
       type = TYPE_MAP[field.type][0]
       method = TYPE_MAP[field.type][1]
       tag = (field.number << 3) + TYPE_MAP[field.type][2]
+      is_message = False
     else:
       raise Exception("Unknown type: %s" % (field.type))
     
@@ -308,20 +337,32 @@ def generate_class(t, parents):
       accessors.append(repeated_accessor_template % dict(name=name, Name=Name, type=type, box_s=box_s, box_e=box_e, unbox_s=unbox_s, unbox_e=unbox_e))
       serializer.append((number, repeated_serializer_template % dict(message=message_identifier, method=method, Name=Name, number=number)))
       
-      if field.type == FieldDescriptorProto.TYPE_MESSAGE:
+      if is_message:
         parser.append((number, repeated_message_parser_template % dict(message=message_identifier, tag=tag, Name=Name, type=type)))
       else:
         parser.append((number, repeated_parser_template % dict(message=message_identifier, tag=tag, Name=Name, method=method)))
     
     else:
+      # We have three cases here:
+      # 1. Nested Message field (optional or required)
+      # 2. Optional non-Message field
+      # 3. Required non-Message field
+      optional_field = (field.label == FieldDescriptorProto.LABEL_OPTIONAL) and not is_message
       fields.append("protected %(type)s %(name)s; // %(number)s" % dict(type=type, name=name, number=number))
-      accessors.append(accessor_template % dict(name=name, Name=Name, type=type))
-      serializer.append((number, single_serializer_template % dict(message=message_identifier, method=method, name=name, number=number)))
-      
-      if field.type == FieldDescriptorProto.TYPE_MESSAGE:
-        parser.append((number, single_message_parser_template % dict(message=message_identifier, tag=tag, name=name, type=type)))
+      if optional_field:
+        fields.append("protected boolean _has%(Name)s;" % dict(Name=Name))
+        accessors.append(optional_accessor_template % dict(name=name, Name=Name, type=type))
+        serializer.append((number, optional_serializer_template % dict(message=message_identifier, method=method, name=name, number=number, Name=Name)))
+        parser.append((number, optional_parser_template % dict(message=message_identifier, tag=tag, name=name, method=method, Name=Name)))
       else:
-        parser.append((number, single_parser_template % dict(message=message_identifier, tag=tag, name=name, method=method)))
+        accessors.append(accessor_template % dict(name=name, Name=Name, type=type))
+        serializer.append((number, single_serializer_template % dict(message=message_identifier, method=method, name=name, number=number)))
+        
+        if is_message:
+            parser.append((number, single_message_parser_template % dict(message=message_identifier, tag=tag, name=name, type=type)))
+        else:
+            # Required field
+            parser.append((number, single_parser_template % dict(message=message_identifier, tag=tag, name=name, method=method)))
     
     
   parser.sort()

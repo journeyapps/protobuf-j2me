@@ -3,3 +3,5 @@ nbproject
 *.pyc
 build
 dist
+gen
+*.class
