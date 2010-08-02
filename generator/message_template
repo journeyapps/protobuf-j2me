@@ -141,5 +141,16 @@ public class ${root_type.name} implements Message {
             }
         }
     }
+    
+    public static ${type.name} fromBytes(byte[] in) throws EncodingException {
+        ${type.name} message = new ${type.name}();
+        ProtoUtil.messageFromBytes(in, message);
+        return message;
+    }
+    
+    public byte[] toBytes() throws EncodingException {
+        return ProtoUtil.messageToBytes(this);
+    }
+    
 </%def>
 

@@ -24,14 +24,21 @@ The code is licenced under the [New BSD License](http://www.opensource.org/licen
         ./setup.py build
         sudo ./setup.py install
   
-  - Install Git
-  - `git clone git://github.com/ponderingpanda/protobuf-j2me.git`
-  - Create an executable file `/usr/local/bin/protoc-gen-j2me`, containing:
-  
-        #!/bin/sh
-        cd /path/to/protobuf-j2me/generator
-        python j2megen.py
+  - Install Git, Ant, JUnit4 (optional) and Mako (http://www.makotemplates.org)
 
+        sudo apt-get install git ant junit4 python-mako
+
+  - Clone the latest version of the repository:
+
+        `git clone git://github.com/ponderingpanda/protobuf-j2me.git`
+
+  - In the repository, run (this allows protoc to use the code generator):
+  
+        sudo ant install-generator
+
+  - Build the library to include in your application (creates dist/protobuf-mobile.jar):
+        
+         ant jar
 
 # Installation on Windows
 
@@ -43,17 +50,14 @@ Run `protoc` as usual, using the option `--j2me_out` instead of `--java_out`.
 
 Make sure that you are using protoc version 2.3.0. This can be confirmed with `protoc --version`. The code generator does not work with any earlier versions, and might not work with future versions.
 
-Include the Java source code and the generated code in your application.
+Include the dist/protobuf-mobile.jar and the generated code in your application.
 
 # Current features
   - most basic types
-    - signed integers not supported yet
-    - unsigned are treated as signed integers
+    - unsigned are treated as signed integers (large numbers will be negative instead)
   - labels
     - optional fields
       - support is currently experimental
-      - primitive fields have hasXXX and clearXXX methods
-      - nested messages may be set to null
     - required fields
       - no validation is done
       - an arbitrary default value is used if the field is not set
@@ -83,3 +87,18 @@ Include the Java source code and the generated code in your application.
   - groups
   - extensions
   
+# Recent changes
+
+2010-08-02
+  - Rewrite of the code generator to use the Mako template engine.
+  - Dropped support for the external serializer class (the seperate_encoders option)
+  - Added an Ant build.xml file:
+    - To build the library.
+    - To run the unit tests.
+    - To install the generator (on unix systems).
+  - Added methods for optional nested messages (hasXXX and clearXXX)
+  - Added convenience methods to messages to convert from and to byte arrays.
+  
+
+2010-07-27
+  - Added support for optional fields (primitive fields now have a _hasXXX flag).

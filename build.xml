@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="protobuf-mobile" default="jar" basedir=".">
+    <dirname property="antfile.dir" file="${ant.file}"/>
+    
+    <target name="install-generator">
+        <echo message="Note: This task needs to be run as root" />
+        <echo file="/usr/local/bin/protoc-gen-j2me">#!/bin/sh
+cd ${antfile.dir}/generator
+python j2megen.py
+</echo>
+        <chmod perm="+rx" file="/usr/local/bin/protoc-gen-j2me" />
+    </target>
+    
     <target name="clean">
         <delete failonerror="false" dir="dist" />
         <delete failonerror="false" dir="build" />
