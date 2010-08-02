@@ -89,16 +89,16 @@ Include the dist/protobuf-mobile.jar and the generated code in your application.
   
 # Recent changes
 
-2010-08-02
-  - Rewrite of the code generator to use the Mako template engine.
-  - Dropped support for the external serializer class (the seperate_encoders option)
-  - Added an Ant build.xml file:
-    - To build the library.
-    - To run the unit tests.
-    - To install the generator (on unix systems).
-  - Added methods for optional nested messages (hasXXX and clearXXX)
-  - Added convenience methods to messages to convert from and to byte arrays.
+  - 2010-08-02
+    - Rewrite of the code generator to use the Mako template engine.
+    - Dropped support for the external serializer class (the seperate_encoders option)
+    - Added an Ant build.xml file:
+      - To build the library.
+      - To run the unit tests.
+      - To install the generator (on unix systems).
+    - Added methods for optional nested messages (hasXXX and clearXXX)
+    - Added convenience methods to messages to convert from and to byte arrays.
   
 
-2010-07-27
-  - Added support for optional fields (primitive fields now have a _hasXXX flag).
+  - 2010-07-27
+    - Added support for optional fields (primitive fields now have a _hasXXX flag).
