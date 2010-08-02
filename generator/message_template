@@ -1,0 +1,145 @@
+package ${package};
+
+import java.util.Vector;
+import java.io.IOException;
+
+import com.ponderingpanda.protobuf.*;
+
+% for imp in imports:
+import ${imp};
+% endfor
+
+public class ${root_type.name} implements Message {
+    ${classcontents(type=root_type)}
+}
+
+<%def name="classcontents(type)">
+  % for nested in type.nested_types:
+    public static class ${nested.name} implements Message {
+      ${classcontents(type=nested)}
+    }
+  % endfor
+  
+  % for enum in type.nested_enums:
+    // ${enum.name}
+    % for value in enum.value:
+    public static final int ${value.name} = ${value.number};
+    % endfor
+  % endfor
+  
+  % for field in type.fields:
+    % if field.repeated:
+    protected Vector ${field.name} = new Vector(); // ${field.number}
+    % else:
+    protected ${field.type} ${field.name}; // ${field.number}
+      % if field.optional and not field.is_message:
+    protected boolean _has${field.Name};
+      % endif
+    % endif
+  % endfor
+    
+  % for field in type.fields:
+  % if not field.repeated:
+    public ${field.type} get${field.Name}() {
+        return ${field.name};
+    }
+    
+    public void set${field.Name}(${field.type} ${field.name}) {
+        this.${field.name} = ${field.name};
+        % if field.optional and not field.is_message:
+        this._has${field.Name} = true;
+        % endif
+    }
+    
+    % if field.optional:
+    public void clear${field.Name}() {
+        % if field.is_message:
+        ${field.name} = null;
+        % else:
+        _has${field.Name} = false;
+        % endif
+    }
+    
+    public boolean has${field.Name}() {
+        % if field.is_message:
+        return ${field.name} == null;
+        % else:
+        return _has${field.Name};
+        % endif
+    }
+    % endif
+  % else:
+    public void add${field.Name}(${field.type} value) {
+        this.${field.name}.addElement(${field.box_s}value${field.box_e});
+    }
+
+    public int get${field.Name}Count() {
+        return this.${field.name}.size();
+    }
+
+    public ${field.type} get${field.Name}(int index) {
+        return ${field.unbox_s}this.${field.name}.elementAt(index)${field.unbox_e};
+    }
+
+    public Vector get${field.Name}Vector() {
+        return this.${field.name};
+    }
+
+    public void set${field.Name}Vector(Vector value) {
+        this.${field.name} = value;
+    }
+  % endif
+  % endfor
+    
+    public final void serialize(CodedOutputStream out) throws IOException {
+      % for field in type.fields:
+        % if field.repeated:
+        for(int i = 0; i < get${field.Name}Count(); i++) {
+            out.write${field.method}(${field.number}, get${field.Name}(i));
+        }
+        % elif field.optional and not field.is_message:
+        if(_has${field.Name})
+            out.write${field.method}(${field.number}, ${field.name});
+        % else:
+        out.write${field.method}(${field.number}, ${field.name});
+        % endif
+        
+      % endfor
+    }
+
+    public final void deserialize(CodedInputStream in) throws IOException {
+        while(true) {
+            int tag = in.readTag();
+            switch(tag) {
+                case 0:
+                    return;
+              % for field in type.fields:
+                case ${field.tag}: {
+                % if field.is_message:
+                  % if field.repeated:
+                    ${field.type} message = new ${field.type}();
+                    in.readMessage(message);
+                    add${field.Name}(message);
+                  % else:
+                    ${field.name} = new ${field.type}();
+                    in.readMessage(${field.name});
+                  % endif
+                % else:
+                  % if field.repeated:
+                    add${field.Name}(in.read${field.method}());
+                  % else:
+                    ${field.name} = in.read${field.method}();
+                    % if field.optional:
+                    _has${field.Name} = true;
+                    % endif
+                  % endif
+                % endif
+                    break; }
+              % endfor
+                default:
+                    in.skipTag(tag);
+            }
+        }
+    }
+</%def>
+

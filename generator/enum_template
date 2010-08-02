@@ -1,0 +1,7 @@
+package ${package};
+
+public class ${enum.name} {
+  % for value in enum.value:
+    public static final int ${value.name} = ${value.number};
+  % endfor
+}

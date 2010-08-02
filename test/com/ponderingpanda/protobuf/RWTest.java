@@ -53,7 +53,7 @@ public class RWTest {
         o.setOptionalForeignMessage(new ForeignMessage());    //TODO
         o.setOptionalInt32(12345);
         o.setOptionalInt64(1236478687345l);
-        o.setOptionalNestedEnum(TestAllTypes.NestedEnum.BAR);
+        o.setOptionalNestedEnum(TestAllTypes.BAR);
         o.setOptionalNestedMessage(new TestAllTypes.NestedMessage()); //TODO
         o.setOptionalSfixed32(12345);
         o.setOptionalSfixed64(123456789123456l);

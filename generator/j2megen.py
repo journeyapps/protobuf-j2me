@@ -1,218 +1,16 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# Copyright Copyright (c) 2010, Pondering Panda
-# All rights reserved.
-# See COPYING.txt
-
-import sys
+from mako.template import Template
+from mako.runtime import Context
+from io import StringIO
 from plugin_pb2 import *
 from google.protobuf.descriptor_pb2 import *
-from exceptions import Exception
+import sys
 
-request = CodeGeneratorRequest()
-request.ParseFromString(sys.stdin.read())
-response = CodeGeneratorResponse()
+WIRETYPE_VARINT           = 0
+WIRETYPE_FIXED64          = 1
+WIRETYPE_LENGTH_DELIMITED = 2
+WIRETYPE_FIXED32          = 5
 
-seperate_encoders = True
-
-file_template = """
-%(package)s
-
-import java.util.Vector;
-import java.io.IOException;
-
-import com.ponderingpanda.protobuf.*;
-
-%(imports)s
-
-public class %(name)s implements Message {
-%(contents)s
-}
-"""
-
-enum_file_template = """
-%(package)s
-
-public class %(name)s {
-%(contents)s
-}
-"""
-
-encoders_file_template = """
-%(package)s
-
-import java.util.Vector;
-import java.io.IOException;
-
-import com.ponderingpanda.protobuf.*;
-
-%(imports)s
-
-public class %(name)s {
-%(contents)s
-}
-"""
-
-nested_template = """
-public static class %(name)s implements Message {
-%(contents)s
-}
-"""
-
-enum_nested_template = """
-public static class %(name)s {
-%(contents)s
-}
-"""
-
-class_template = """
-%(nested_enums)s
-%(nested_types)s
-%(fields)s
-%(accessors)s
-%(encoder)s
-"""
-
-encoders_template = """
-public final void serialize(CodedOutputStream out) throws IOException {
-%(serializer)s
-}
-
-public final void deserialize(CodedInputStream in) throws IOException {
-    while(true) {
-        int tag = in.readTag();
-        switch(tag) {
-            case 0:
-                return;
-%(parser)s
-            default:
-                in.skipTag(tag);
-        }
-    }
-}
-"""
-
-seperate_encoders_template = """
-public final void serialize(CodedOutputStream out) throws IOException {
-    %(encoder)s.serialize(this, out);
-}
-
-public final void deserialize(CodedInputStream in) throws IOException {
-    %(encoder)s.deserialize(this, in);
-}
-"""
-
-seperate_encoder_implementation_template = """
-public static void serialize(%(name)s msg, CodedOutputStream out) throws IOException {
-%(serializer)s
-}
-
-public static void deserialize(%(name)s msg, CodedInputStream in) throws IOException {
-    while(true) {
-        int tag = in.readTag();
-        switch(tag) {
-            case 0:
-                return;
-%(parser)s
-            default:
-                in.skipTag(tag);
-        }
-    }
-}
-"""
-
-accessor_template = """
-public %(type)s get%(Name)s() {
-    return %(name)s;
-}
-
-public void set%(Name)s(%(type)s %(name)s) {
-    this.%(name)s = %(name)s;
-}
-"""
-
-optional_accessor_template = """
-public boolean has%(Name)s() {
-    return _has%(Name)s;
-}
-
-public %(type)s get%(Name)s() {
-    return %(name)s;
-}
-
-public void set%(Name)s(%(type)s %(name)s) {
-    this.%(name)s = %(name)s;
-    _has%(Name)s = true;
-}
-
-public void clear%(Name)s() {
-    _has%(Name)s = false;
-}
-"""
-
-repeated_accessor_template = """
-public void add%(Name)s(%(type)s value) {
-    this.%(name)s.addElement(%(box_s)svalue%(box_e)s);
-}
-
-public int get%(Name)sCount() {
-    return this.%(name)s.size();
-}
-
-public %(type)s get%(Name)s(int index) {
-    return %(unbox_s)sthis.%(name)s.elementAt(index)%(unbox_e)s;
-}
-
-public Vector get%(Name)sVector() {
-    return this.%(name)s;
-}
-
-public void set%(Name)sVector(Vector value) {
-    this.%(name)s = value;
-}
-"""
-
-repeated_parser_template = """case %(tag)d: {
-    %(message)s.add%(Name)s(in.read%(method)s());
-    break; }"""
-
-repeated_message_parser_template = """case %(tag)d: {
-    %(type)s message = new %(type)s();
-    in.readMessage(message);
-    %(message)s.add%(Name)s(message);
-    break; }"""
-    
-repeated_serializer_template = """
-for(int i = 0; i < %(message)s.get%(Name)sCount(); i++) {
-    out.write%(method)s(%(number)d, %(message)s.get%(Name)s(i));
-}"""
-
-single_parser_template = """case %(tag)d: {
-    %(message)s.%(name)s = in.read%(method)s();
-    break; }"""
-
-optional_parser_template = """case %(tag)d: {
-    %(message)s.%(name)s = in.read%(method)s();
-    %(message)s._has%(Name)s = true;
-    break; }"""
-
-
-single_message_parser_template = """case %(tag)d: {
-    %(message)s.%(name)s = new %(type)s();
-    in.readMessage(%(message)s.%(name)s);
-    break; }"""
-    
-single_serializer_template = "out.write%(method)s(%(number)d, %(message)s.%(name)s);"
-
-optional_serializer_template = """if(%(message)s._has%(Name)s)
-    out.write%(method)s(%(number)d, %(message)s.%(name)s);"""
-
-WIRETYPE_VARINT           = 0;
-WIRETYPE_FIXED64          = 1;
-WIRETYPE_LENGTH_DELIMITED = 2;
-WIRETYPE_FIXED32          = 5;
-  
 TYPE_MAP = {
   FieldDescriptorProto.TYPE_DOUBLE: ["double", "Double", WIRETYPE_FIXED64],
   FieldDescriptorProto.TYPE_FLOAT: ["float", "Float", WIRETYPE_FIXED32],
@@ -240,6 +38,12 @@ WRAPPERS = dict(
   boolean="Boolean",
 )
 
+class MessageDescription:
+  pass
+
+class FieldDescription:
+  pass
+
 all_classes = set()
 
 def fully_qualified_name(parents, classname):
@@ -259,132 +63,77 @@ def fully_qualified_name2(name):
     all = all[1:]
   return all[0]
   
-def indent(contents, times=1):
-  if isinstance(contents, list):
-    return ['    '*times + line for line in contents]
-  else:
-    lines = contents.split('\n')
-    return '\n'.join(['    '*times + line for line in lines])
-  
-def jindent(lines, times=1):
-  return indent('\n'.join(lines), times)
 
-def generate_enum(enum):
-  values = []
-  for value in enum.value:
-    values.append("public static final int %(name)s = %(value)d;" % dict(name=value.name, value=value.number))
-  return jindent(values, 0)
 
-def generate_class(t, parents):
-  fields = []
-  accessors = []
-  serializer = []
-  parser = []
-  nested_enums = []
-  nested_types = []
-  nested_encoder_implementations = []
+def parse_type(t):
+  m = MessageDescription()
+  m.name = t.name
+  m.nested_enums = t.enum_type
+  m.nested_types = []
   
-  if seperate_encoders:
-    message_identifier = "msg"
-  else:
-    message_identifier = "this"
-    
-  for enum in t.enum_type:
-    #nested_enums.append(enum_nested_template % dict(name=enum.name, contents=indent(generate_enum(enum))))
-    nested_enums.append(generate_enum(enum))
-      
   for nested in t.nested_type:
-    contents, nested_encoder_implementation = generate_class(nested, parents + [t.name])
-    nested_types.append(nested_template % dict(name=nested.name, contents=indent(contents)))
-    nested_encoder_implementations += nested_encoder_implementation
-    
+    m.nested_types.append(parse_type(nested))
+      
+  m.fields = []
   for field in t.field:
+    f = FieldDescription()
     if field.type == FieldDescriptorProto.TYPE_MESSAGE:
       if field.type_name.startswith('.'):
-        type = fully_qualified_name2(field.type_name)
+        f.type = fully_qualified_name2(field.type_name)
       else:
-        type = fully_qualified_name(parents, field.type_name)
+        f.type = fully_qualified_name(parents, field.type_name)
         
-      method = "Message"
-      tag = (field.number << 3) + WIRETYPE_LENGTH_DELIMITED
-      is_message = True
+      f.method = "Message"
+      f.tag = (field.number << 3) + WIRETYPE_LENGTH_DELIMITED
+      f.is_message = True
     elif field.type in TYPE_MAP:
-      type = TYPE_MAP[field.type][0]
-      method = TYPE_MAP[field.type][1]
-      tag = (field.number << 3) + TYPE_MAP[field.type][2]
-      is_message = False
+      f.type = TYPE_MAP[field.type][0]
+      f.method = TYPE_MAP[field.type][1]
+      f.tag = (field.number << 3) + TYPE_MAP[field.type][2]
+      f.is_message = False
     else:
       raise Exception("Unknown type: %s" % (field.type))
     
     words = [word.lower() for word in field.name.split('_')]
-    Name = ''.join([word.title() for word in words])
-    name = ''.join([words[0]] + [word.title() for word in words[1:]])
-    number = field.number
+    f.Name = ''.join([word.title() for word in words])
+    f.name = ''.join([words[0]] + [word.title() for word in words[1:]])
+    f.number = field.number
     
-    
+    f.repeated = (field.label == FieldDescriptorProto.LABEL_REPEATED)
+    f.optional = (field.label == FieldDescriptorProto.LABEL_OPTIONAL)
     
     if field.label == FieldDescriptorProto.LABEL_REPEATED:
-      fields.append("protected Vector %(name)s = new Vector(); // %(number)s, %(type)s" % dict(type=type, name=name, number=number))
-      box_e, box_s, unbox_e, unbox_s = [""]*4
-      if type in WRAPPERS:
-        box_s = "new %s(" % WRAPPERS[type]
-        box_e = ")"
-        unbox_s = "((%s)" % WRAPPERS[type]
-        unbox_e = ").%sValue()" % type
+      f.box_e, f.box_s, f.unbox_e, f.unbox_s = [""]*4
+      if f.type in WRAPPERS:
+        f.box_s = "new %s(" % WRAPPERS[f.type]
+        f.box_e = ")"
+        f.unbox_s = "((%s)" % WRAPPERS[f.type]
+        f.unbox_e = ").%sValue()" % f.type
       else:
-        unbox_s = "(%s)" % type
-        
-      accessors.append(repeated_accessor_template % dict(name=name, Name=Name, type=type, box_s=box_s, box_e=box_e, unbox_s=unbox_s, unbox_e=unbox_e))
-      serializer.append((number, repeated_serializer_template % dict(message=message_identifier, method=method, Name=Name, number=number)))
+        f.unbox_s = "(%s)" % f.type
       
-      if is_message:
-        parser.append((number, repeated_message_parser_template % dict(message=message_identifier, tag=tag, Name=Name, type=type)))
-      else:
-        parser.append((number, repeated_parser_template % dict(message=message_identifier, tag=tag, Name=Name, method=method)))
+            
+    m.fields.append(f)
+  
+  return m
     
-    else:
-      # We have three cases here:
-      # 1. Nested Message field (optional or required)
-      # 2. Optional non-Message field
-      # 3. Required non-Message field
-      optional_field = (field.label == FieldDescriptorProto.LABEL_OPTIONAL) and not is_message
-      fields.append("protected %(type)s %(name)s; // %(number)s" % dict(type=type, name=name, number=number))
-      if optional_field:
-        fields.append("protected boolean _has%(Name)s;" % dict(Name=Name))
-        accessors.append(optional_accessor_template % dict(name=name, Name=Name, type=type))
-        serializer.append((number, optional_serializer_template % dict(message=message_identifier, method=method, name=name, number=number, Name=Name)))
-        parser.append((number, optional_parser_template % dict(message=message_identifier, tag=tag, name=name, method=method, Name=Name)))
-      else:
-        accessors.append(accessor_template % dict(name=name, Name=Name, type=type))
-        serializer.append((number, single_serializer_template % dict(message=message_identifier, method=method, name=name, number=number)))
-        
-        if is_message:
-            parser.append((number, single_message_parser_template % dict(message=message_identifier, tag=tag, name=name, type=type)))
-        else:
-            # Required field
-            parser.append((number, single_parser_template % dict(message=message_identifier, tag=tag, name=name, method=method)))
-    
-    
-  parser.sort()
-  serializer.sort()
-  parser = [p[1] for p in parser]
-  serializer = [s[1] for s in serializer]
-  
-  if seperate_encoders:
-    encoders = seperate_encoders_template % dict(encoder="ProtobufEncoders")
-    nested_encoder_implementations.append(seperate_encoder_implementation_template % dict(name='.'.join(parents + [t.name]), serializer=jindent(serializer, 1), parser=jindent(parser, 3)))
-  else:
-    encoders = encoders_template % dict(serializer=jindent(serializer, 1), parser=jindent(parser, 3))
-    nested_encoder_implementations = []
-  
-  contents = class_template % dict(nested_enums=jindent(nested_enums, 0), nested_types=jindent(nested_types, 0), fields=jindent(fields, 0), accessors=jindent(accessors, 0), encoder=encoders)
-  return contents, nested_encoder_implementations
-  
-  
 def find_all_classes(messages, parents=[]):
   for message in messages:
     all_classes.add('.'.join(parents + [message.name]))
     find_all_classes(message.nested_type, parents + [message.name])
+
+message_template = Template(filename='message_template')
+enum_template = Template(filename='enum_template')
+
+def render(template, **attrs):
+    buf = StringIO()
+    ctx = Context(buf, **attrs)
+    template.render_context(ctx, **attrs)
+    return buf.getvalue()
+
+request = CodeGeneratorRequest()
+request.ParseFromString(sys.stdin.read())
+response = CodeGeneratorResponse()
 
 files_to_generate = set(request.file_to_generate)
 in_imported_file = True
@@ -405,9 +154,10 @@ for f in request.proto_file:
         imported_packages[f.name] = f.options.java_package
       continue
     
-  imports = ""
+  imports = []
   for d in f.dependency:
-    imports += "import %s.*;\n" % (imported_packages[d])
+    if d in imported_packages:
+      imports.append(imported_packages[d])
   
   
   if f.options.HasField("java_package"):
@@ -418,13 +168,10 @@ for f in request.proto_file:
     package = None
     
   if package:
-    pline = "package %s;" % package
     folder = '/'.join(package.split('.')) + '/'
   else:
-    pline = ""
     folder = ''
     
-  encoders = []
   
   # First pass: find all classes
   find_all_classes(f.message_type, [])
@@ -433,21 +180,17 @@ for f in request.proto_file:
     file = response.file.add()
     file.name = folder + t.name + ".java"
     
-    c, nested_encoder_implementations = generate_class(t, [])
-    encoders += nested_encoder_implementations
-    file.content = file_template % {'name': t.name, 'contents': indent(c), 'package': pline, 'imports': imports}
+    result = render(message_template, package=package, imports=imports, root_type=parse_type(t))
+    
+    file.content = result
     
   for t in f.enum_type:
     file = response.file.add()
     file.name = folder + t.name + ".java"
     
-    c = generate_enum(t)
-    file.content = enum_file_template % {'name': t.name, 'contents': indent(c), 'package': pline, 'imports': imports}
+    result = render(enum_template, package=package, enum=t)
+    file.content = result
     
-  if seperate_encoders:
-    file = response.file.add()
-    file.name = folder + "ProtobufEncoders.java"
-    file.content = encoders_file_template % dict(name="ProtobufEncoders", contents=jindent(encoders), package=pline, imports=imports)
     
 sys.stdout.write(response.SerializeToString())
 sys.stdout.flush()

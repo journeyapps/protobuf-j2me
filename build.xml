@@ -1,83 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- You may freely edit this file. See commented blocks below for -->
-<!-- some examples of how to customize the build. -->
-<!-- (If you delete it and reopen the project it will be recreated.) -->
+
 <project name="protobuf-mobile" default="jar" basedir=".">
-    <description>Builds, tests, and runs the project .</description>
-    <import file="nbproject/build-impl.xml"/>
-    <!--
+    <target name="clean">
+        <delete failonerror="false" dir="dist" />
+        <delete failonerror="false" dir="build" />
+        <delete failonerror="false" dir="gen" />
+    </target>
 
-            There exist several targets which are by default empty and which can be
-            used for execution of your tasks. These targets are usually executed
-            before and after some main targets. They are:
-
-            pre-init:                 called before initialization of project properties
-            post-init:                called after initialization of project properties
-            pre-preprocess:           called before text preprocessing of sources
-            post-preprocess:          called after text preprocessing of sources
-            pre-compile:              called before source compilation
-            post-compile:             called after source compilation
-            pre-obfuscate:            called before obfuscation 
-            post-obfuscate:           called after obfuscation
-            pre-preverify:            called before preverification
-            post-preverify:           called after preverification
-            pre-jar:                  called before jar building
-            post-jar:                 called after jar building
-            pre-build:                called before final distribution building
-            post-build:               called after final distribution building
-            pre-clean:                called before cleaning build products
-            post-clean:               called after cleaning build products
-
-            Example of pluging a my-special-task after the compilation could look like
-
-            <target name="post-compile">
-            <my-special-task>
-            <fileset dir="${build.classes.dir}"/>
-            </my-special-task>
-            </target>
-
-            For list of available properties check the imported
-            nbproject/build-impl.xml file.
-
-            Other way how to customize the build is by overriding existing main targets.
-            The target of interest are:
-
-            preprocess:               preprocessing
-            extract-libs:             extraction of libraries and resources
-            compile:                  compilation
-            create-jad:               construction of jad and jar manifest source
-            obfuscate:                obfuscation
-            preverify:                preverification
-            jar:                      jar archive building
-            run:                      execution
-            debug:                    execution in debug mode
-            build:                    building of the final distribution
-            javadoc:                  javadoc generation
-
-            Example of overriding the target for project execution could look like
-
-            <target name="run" depends="init,jar">
-            <my-special-exec jadfile="${dist.dir}/${dist.jad}"/>
-            </target>
-
-            Be careful about correct dependencies when overriding original target. 
-            Again, for list of available properties which you can use check the target 
-            you are overriding in nbproject/build-impl.xml file.
-
-            A special target for-all-configs can be used to run some specific targets for
-            all project configurations in a sequence. File nbproject/build-impl.xml 
-            already contains some "for-all" targets:
+    <target name="build">
+        <mkdir dir="build/main" />
+        <javac srcdir="src"
+               destdir="build/main" />
+    </target>
     
-            jar-all
-            javadoc-all
-            clean-all
-      
-            Example of definition of target iterating over all project configurations:
+    <target name="jar">
+        <mkdir dir="dist" />
+        <jar jarfile="dist/protobuf-mobile.jar">
+            <fileset dir="build/main"/>
+        </jar>
+    </target>
     
-            <target name="jar-all">
-            <property name="target.to.call" value="jar"/>
-            <antcall target="for-all-configs"/>
-            </target>
+        
+    <target name="protoc-tests">
+        <delete failonerror="false" dir="test-generated"/>
+        <mkdir dir="gen/test"/>
+        <exec executable="protoc" failonerror="yes">
+            <arg value="--j2me_out=gen/test"/>
+            <arg value="-I"/>
+            <arg value="."/>
+            <arg value="unittest.proto"/>
+        </exec>
+    </target>
+    
+    <target name="build-test-messages" depends="protoc-tests,build">
+        <mkdir dir="build/test-messages" />
+        <javac srcdir="gen/test"
+               destdir="build/test-messages" classpath="build/main"/>
+    </target>
+    
+    <target name="build-tests" depends="build-test-messages,build">
+        <mkdir dir="build/tests" />
+        <javac srcdir="test"
+               destdir="build/tests" >
+           <classpath location="/usr/share/java/junit4.jar" />
+           <classpath location="build/main" />
+           <classpath location="build/test-messages" />
+        </javac>
+    </target>
+    
+    <target name="test" depends="build-tests">
+        <junit printsummary="yes" haltonfailure="yes">
+            <classpath>
+                <pathelement location="/usr/share/java/junit4.jar" />
+                <pathelement path="build/main"/>
+                <pathelement path="build/tests"/>
+                <pathelement path="build/test-messages"/>
+            </classpath>
 
-            -->
+            <formatter type="plain" usefile="false"/>
+
+            <batchtest>
+                <fileset dir="test">
+                    <include name="**/*Test*.java"/>
+                </fileset>
+            </batchtest>
+            </junit>
+    </target>
 </project>
