@@ -30,7 +30,7 @@ The code is licenced under the [New BSD License](http://www.opensource.org/licen
 
   - Clone the latest version of the repository:
 
-        `git clone git://github.com/ponderingpanda/protobuf-j2me.git`
+        git clone git://github.com/ponderingpanda/protobuf-j2me.git
 
   - In the repository, run (this allows protoc to use the code generator):
   

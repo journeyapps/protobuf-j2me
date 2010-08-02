@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from mako.template import Template
 from mako.runtime import Context
-from io import StringIO
+from StringIO import StringIO
 from plugin_pb2 import *
 from google.protobuf.descriptor_pb2 import *
 import sys
