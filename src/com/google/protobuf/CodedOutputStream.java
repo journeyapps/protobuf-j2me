@@ -8,7 +8,7 @@
  * Java implementation of Protocol Buffers.
  */
 
-package com.ponderingpanda.protobuf;
+package com.google.protobuf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

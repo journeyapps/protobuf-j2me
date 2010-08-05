@@ -24,7 +24,7 @@ python j2megen.py
                destdir="build/main" />
     </target>
     
-    <target name="jar">
+    <target name="jar" depends="build">
         <mkdir dir="dist" />
         <jar jarfile="dist/protobuf-mobile.jar">
             <fileset dir="build/main"/>

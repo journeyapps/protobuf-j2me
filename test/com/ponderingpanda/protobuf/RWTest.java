@@ -7,6 +7,7 @@ package com.ponderingpanda.protobuf;
 
 import com.google.protobuf.ForeignEnum;
 import com.google.protobuf.ForeignMessage;
+import com.google.protobuf.ProtoUtil;
 import com.google.protobuf.TestAllTypes;
 import org.junit.*;
 
@@ -92,7 +93,7 @@ public class RWTest {
     }
 
     @Test
-    public void testNoRepeatedFields() {
+    public void testNoRepeatedFields() throws IOException {
         TestAllTypes i = new TestAllTypes();
         ProtoUtil.messageFromBytes(new byte[0], i);
 
@@ -100,7 +101,7 @@ public class RWTest {
     }
 
     @Test
-    public void testAllRepeatedFields() {
+    public void testAllRepeatedFields() throws IOException {
         TestAllTypes o = new TestAllTypes();
         o.addRepeatedBool(true);
         o.addRepeatedBool(false);
@@ -154,7 +155,7 @@ public class RWTest {
     }
 
     @Test
-    public void testNoOptionalFields() {
+    public void testNoOptionalFields() throws IOException {
         // No fields set
         TestAllTypes o = new TestAllTypes();
         byte[] bytes = ProtoUtil.messageToBytes(o);

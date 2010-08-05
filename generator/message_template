@@ -3,7 +3,7 @@ package ${package};
 import java.util.Vector;
 import java.io.IOException;
 
-import com.ponderingpanda.protobuf.*;
+import com.google.protobuf.*;
 
 % for imp in imports:
 import ${imp};
@@ -137,18 +137,18 @@ public class ${root_type.name} implements Message {
                     break; }
               % endfor
                 default:
-                    in.skipTag(tag);
+                    in.skipField(tag);
             }
         }
     }
     
-    public static ${type.name} fromBytes(byte[] in) throws EncodingException {
+    public static ${type.name} fromBytes(byte[] in) throws IOException {
         ${type.name} message = new ${type.name}();
         ProtoUtil.messageFromBytes(in, message);
         return message;
     }
     
-    public byte[] toBytes() throws EncodingException {
+    public byte[] toBytes() throws IOException {
         return ProtoUtil.messageToBytes(this);
     }
     

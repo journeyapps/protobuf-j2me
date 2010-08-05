@@ -6,7 +6,7 @@
  *
  */
 
-package com.ponderingpanda.protobuf;
+package com.google.protobuf;
 
 import java.io.IOException;
 
@@ -17,4 +17,5 @@ import java.io.IOException;
 public interface Message {
     public void serialize(CodedOutputStream out) throws IOException;
     public void deserialize(CodedInputStream in) throws IOException;
+    public byte[] toBytes() throws IOException;
 }

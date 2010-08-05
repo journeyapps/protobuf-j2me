@@ -5,9 +5,8 @@
  * See COPYING.txt for the complete copyright notice.
  *
  */
-package com.ponderingpanda.protobuf;
+package com.google.protobuf;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +25,7 @@ public class ProtoUtil {
 
     /** Reads until the end of the stream. */
     public static void readMessage(InputStream in, Message message) throws IOException {
-        CodedInputStream coded = new CodedInputStream(in);
+        CodedInputStream coded = CodedInputStream.newInstance(in);
         message.deserialize(coded);
     }
 
@@ -43,37 +42,27 @@ public class ProtoUtil {
         coded.writeRawVarint32(0);
     }
 
-    public static byte[] messageToBytes(Message message) throws EncodingException {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            CodedOutputStream coded = new CodedOutputStream(out);
-            message.serialize(coded);
-            return out.toByteArray();
-        } catch(IOException e) {
-            // We are using a ByteArrayOutputStream, this should not happen
-            throw new EncodingException("IOException: " + e.getMessage());
-        }
+    public static byte[] messageToBytes(Message message) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        CodedOutputStream coded = new CodedOutputStream(out);
+        message.serialize(coded);
+        return out.toByteArray();
     }
 
-    public static void messageFromBytes(byte[] in, Message message) throws EncodingException {
-        CodedInputStream coded = new CodedInputStream(new ByteArrayInputStream(in));
-        try {
-            message.deserialize(coded);
-        } catch(IOException e) {
-            // We are using a ByteArrayInputStream, this should not happen
-            throw new EncodingException("IOException: " + e.getMessage());
-        }
+    public static void messageFromBytes(byte[] in, Message message) throws IOException {
+        CodedInputStream coded = CodedInputStream.newInstance(in);
+        message.deserialize(coded);
     }
 
     public static void readMessageWithSize(InputStream in, Message message) throws IOException {
-        CodedInputStream coded = new CodedInputStream(in);
+        CodedInputStream coded = CodedInputStream.newInstance(in);
         coded.readMessage(message);
     }
 
     public static void readDelimitedMessage(InputStream in, Message message) throws IOException {
-        CodedInputStream coded = new CodedInputStream(in);
+        CodedInputStream coded = CodedInputStream.newInstance(in);
         message.deserialize(coded);
-        if(coded.isEndOfStream())
+        if(coded.isAtEnd())
             throw new IOException("End of stream");
     }
 }
