@@ -62,7 +62,7 @@ public class ${root_type.name} implements Message {
     
     public boolean has${field.Name}() {
         % if field.is_message:
-        return ${field.name} == null;
+        return ${field.name} != null;
         % else:
         return _has${field.Name};
         % endif
