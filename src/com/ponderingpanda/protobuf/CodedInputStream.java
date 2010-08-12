@@ -13,7 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -123,7 +122,7 @@ public class CodedInputStream {
             ByteArrayOutputStream out = new ByteArrayOutputStream(DIRECT_READ_LIMIT);
             byte[] buffer = new byte[DIRECT_READ_LIMIT];
             while(off < size) {
-                int read = in.read(buffer);
+                int read = in.read(buffer, 0, Math.min(DIRECT_READ_LIMIT, size - off));
                 if(read < 0)
                     throw new IOException("Unexpected end of stream");
                 off += read;

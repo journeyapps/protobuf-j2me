@@ -11,6 +11,7 @@ import com.google.protobuf.TestAllTypes;
 import org.junit.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -227,4 +228,46 @@ public class RWTest {
         assertArrayEquals(bytes, bytes2);
     }
 
+    private void testBytes(byte[] bytes) {
+        TestAllTypes o = new TestAllTypes();
+        o.setOptionalBytes(bytes);
+        o.setDefaultInt32(12345);    // Anything that comes after the bytes in the message
+
+        byte[] serialized = ProtoUtil.messageToBytes(o);
+        TestAllTypes i = TestAllTypes.fromBytes(serialized);
+        assertArrayEquals(bytes, i.getOptionalBytes());
+        assertEquals(12345, o.getDefaultInt32());
+    }
+    
+    @Test
+    public void testLargeByteArrays() {
+        testBytes(new byte[] { 1,2,3,4,5 });
+
+        int limit = 20*1024;
+
+        byte[] large = new byte[limit-1];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+
+        large = new byte[limit];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+
+        large = new byte[limit+1];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+
+        large = new byte[limit+100];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+
+        large = new byte[limit*2];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+
+        large = new byte[limit*2+5];
+        Arrays.fill(large, (byte)5);
+        testBytes(large);
+        
+    }
 }
