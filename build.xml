@@ -21,10 +21,10 @@ python j2megen.py
     <target name="build">
         <mkdir dir="build/main" />
         <javac srcdir="src"
-               destdir="build/main" />
+               destdir="build/main" target="1.4" />
     </target>
     
-    <target name="jar">
+    <target name="jar" depends="build">
         <mkdir dir="dist" />
         <jar jarfile="dist/protobuf-mobile.jar">
             <fileset dir="build/main"/>
